@@ -9,29 +9,65 @@ function App() {
   const [role, setRole] = useState(null);
   const [user, setUser] = useState(null);
 
-  if (!role || !user) {
-    return <Home setRole={setRole} setUser={setUser} />;
-  }
+  const renderContent = () => {
+    if (!role || !user) {
+      return <Home setRole={setRole} setUser={setUser} />;
+    }
 
-  if (role === 'donante') {
-    return <DonorDashboard user={user} setRole={setRole} setUser={setUser} />;
-  }
+    if (role === 'donante') {
+      return (
+        <DonorDashboard
+          user={user}
+          setRole={setRole}
+          setUser={setUser}
+        />
+      );
+    }
 
-  if (role === 'beneficiario') {
-    return <BeneficiaryDashboard user={user} setRole={setRole} setUser={setUser} />;
-  }
+    if (role === 'beneficiario') {
+      return (
+        <BeneficiaryDashboard
+          user={user}
+          setRole={setRole}
+          setUser={setUser}
+        />
+      );
+    }
 
-  if (role === 'voluntario') {
-    return <VolunteerDashboard user={user} setRole={setRole} setUser={setUser} />;
-  }
+    if (role === 'voluntario') {
+      return (
+        <VolunteerDashboard
+          user={user}
+          setRole={setRole}
+          setUser={setUser}
+        />
+      );
+    }
 
-  // Fallback raro (por si algo se rompe)
+    return (
+      <div>
+        <p>Rol no reconocido.</p>
+        <button
+          className="btn-primary"
+          onClick={() => {
+            setUser(null);
+            setRole(null);
+          }}
+        >
+          Volver al inicio
+        </button>
+      </div>
+    );
+  };
+
   return (
-    <div style={{ padding: '2rem' }}>
-      <p>Rol no reconocido. Recargando...</p>
-      <button onClick={() => { setUser(null); setRole(null); }}>
-        Volver al inicio
-      </button>
+    <div className="app-shell">
+      <div className="app-container">
+        {renderContent()}
+        <div className="app-footer">
+          Prototipo académico – Caicedonia · React + Node / Express
+        </div>
+      </div>
     </div>
   );
 }
