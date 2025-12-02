@@ -1,3 +1,4 @@
+// backend/index.js
 const express = require('express');
 const cors = require('cors');
 
@@ -5,21 +6,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Datos en memoria (después puedes pasar a JSON o DB)
-let donations = [];
-let nextDonationId = 1;
-
-// Roles: donante, beneficiario, voluntario
-// Por ahora simulamos usuarios simples:
+// ---- Datos en memoria ----
 let users = [];
 let nextUserId = 1;
 
-// Rutas
+let donations = [];
+let nextDonationId = 1;
 
-// Registrar usuario
+// ---- Rutas ----
+
+// Registrar usuario (donante / beneficiario / voluntario)
 app.post('/api/users', (req, res) => {
   const { name, role, location } = req.body;
-  const newUser = { id: nextUserId++, name, role, location };
+  if (!name || !role) {
+    return res.status(400).json({ message: 'Nombre y rol son obligatorios' });
+  }
+  const newUser = { id: nextUserId++, name, role, location: location || '' };
   users.push(newUser);
   res.status(201).json(newUser);
 });
@@ -27,23 +29,29 @@ app.post('/api/users', (req, res) => {
 // Crear donación (Donante)
 app.post('/api/donations', (req, res) => {
   const { donorId, title, description, quantity, expirationDate, location } = req.body;
+
+  if (!donorId || !title) {
+    return res.status(400).json({ message: 'donorId y title son obligatorios' });
+  }
+
   const newDonation = {
     id: nextDonationId++,
     donorId,
     title,
-    description,
-    quantity,
-    expirationDate,
-    location,
-    status: 'PUBLICADA', // PUBLICADA / RESERVADA / EN_RUTA / ENTREGADA
+    description: description || '',
+    quantity: quantity || 1,
+    expirationDate: expirationDate || null,
+    location: location || '',
+    status: 'PUBLICADA',          // PUBLICADA / RESERVADA / EN_RUTA / ENTREGADA
     beneficiaryId: null,
-    volunteerId: null
+    volunteerId: null,
   };
+
   donations.push(newDonation);
   res.status(201).json(newDonation);
 });
 
-// Listar donaciones disponibles (Beneficiarios)
+// Listar donaciones
 app.get('/api/donations', (req, res) => {
   res.json(donations);
 });
@@ -52,24 +60,29 @@ app.get('/api/donations', (req, res) => {
 app.post('/api/donations/:id/request', (req, res) => {
   const donationId = parseInt(req.params.id, 10);
   const { beneficiaryId } = req.body;
+
   const donation = donations.find(d => d.id === donationId);
   if (!donation) return res.status(404).json({ message: 'Donación no encontrada' });
+
   donation.status = 'RESERVADA';
   donation.beneficiaryId = beneficiaryId;
   res.json(donation);
 });
 
-// Voluntario actualiza estado
+// Voluntario actualiza estado (EN_RUTA / ENTREGADA)
 app.post('/api/donations/:id/status', (req, res) => {
   const donationId = parseInt(req.params.id, 10);
-  const { status, volunteerId } = req.body; // EN_RUTA / ENTREGADA
+  const { status, volunteerId } = req.body;
+
   const donation = donations.find(d => d.id === donationId);
   if (!donation) return res.status(404).json({ message: 'Donación no encontrada' });
+
   donation.status = status;
   if (volunteerId) donation.volunteerId = volunteerId;
   res.json(donation);
 });
 
+// ---- Arrancar servidor ----
 const PORT = 4000;
 app.listen(PORT, () => {
   console.log(`Backend escuchando en http://localhost:${PORT}`);
